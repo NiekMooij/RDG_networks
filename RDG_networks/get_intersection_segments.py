@@ -1,7 +1,7 @@
 import numpy as np
 from typing import List, Tuple
 
-from Classes import LineSegment
+from .Classes import LineSegment
 
 def order_points(points: List[Tuple[float, float]], segment_start: Tuple[float, float]) -> List[Tuple[float, float]]:
     """
@@ -31,8 +31,16 @@ def get_intersection_segments(line_segments: List[LineSegment]) -> List[LineSegm
     """
     intersection_points = {segment.id: [] for segment in line_segments}
 
+    intersection_points['b1'] = [(1, 0), (0, 0)] 
+    intersection_points['b2'] = [(0, 1), (0, 0)] 
+    intersection_points['b3'] = [(0, 1), (1, 1)] 
+    intersection_points['b4'] = [(1, 1), (1, 0)] 
+
     # Add all segments minus the borders
     for index, segment in enumerate(line_segments):
+        if segment.id in ['b1', 'b2', 'b3', 'b4']:
+            continue
+
         neighbors_initial = segment.neighbors_initial
 
         # Add segment start and end points to intersection points
@@ -46,7 +54,9 @@ def get_intersection_segments(line_segments: List[LineSegment]) -> List[LineSegm
     # Order intersection points
     ordered_intersection_points = {}
     for segment_id, points in intersection_points.items():
+    
         ordered_points = order_points(points, points[0])
+        ordered_points = list(set(ordered_points))
         ordered_intersection_points[segment_id] = ordered_points
 
     # Generate intersection segments

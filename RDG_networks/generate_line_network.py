@@ -2,7 +2,7 @@ import networkx as nx
 import numpy as np
 from typing import List
 
-from Classes import LineSegment
+from .Classes import LineSegment
 
 def generate_line_network(line_segments: List[LineSegment]) -> List[List[int]]:
     """

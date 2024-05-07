@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from typing import List, Optional
 
-from Classes import LineSegment
+from .Classes import LineSegment
 
 def draw_segments(segments: List[LineSegment], fig: Optional[plt.Figure] = None, ax: Optional[plt.Axes] = None) -> None:
     """

@@ -4,8 +4,8 @@ import numpy as np
 import random
 from typing import List, Tuple, Union
 
-from Classes import Line, LineSegment, Polygon
-from sample_in_polygon import sample_in_polygon
+from .Classes import Line, LineSegment, Polygon
+from .sample_in_polygon import sample_in_polygon
     
 def doLinesIntersect(line1: Line, line2: Line) -> Tuple[bool, Union[Tuple[float, float], None]]:
     """
@@ -62,20 +62,20 @@ def get_vertices(vertices, index_begin, index_end, vertex_begin, vertex_end):
     
     return vertices1, vertices2
 
-def update_polygon_arr(polygon_id, polygon_arr, neighbor1, neighbor2, vertex_begin, vertex_end, id):
+def update_polygon_arr(polygon_id, polygon_arr, neighbor1, neighbor2, vertex_begin, vertex_end):
     
     vertices=polygon_arr[polygon_id]['vertices']
     cycle = polygon_arr[polygon_id]['faces']
     index_begin, index_end = (cycle.index(neighbor1), cycle.index(neighbor2))
     
-    cycle1, cycle2 = get_cyles(cycle=cycle, segment_new_id=id, neighbor1=neighbor1, neighbor2=neighbor2, index_begin=index_begin, index_end=index_end)
+    cycle1, cycle2 = get_cyles(cycle=cycle, segment_new_id=str(len(polygon_arr)), neighbor1=neighbor1, neighbor2=neighbor2, index_begin=index_begin, index_end=index_end)
     vertices1, vertices2 = get_vertices(vertices, index_begin, index_end, vertex_begin, vertex_end)
 
     polygon1 = Polygon(vertices=vertices1)
     area1 = polygon1.area()
     area2 = polygon_arr[polygon_id]['area'] - area1
     
-    polygon_new_1 = { id: { 'vertices': vertices1, 'area': area1, 'faces': cycle1[:-1] } }
+    polygon_new_1 = { f'p{len(polygon_arr)+1}': { 'vertices': vertices1, 'area': area1, 'faces': cycle1[:-1] } }
     polygon_new_2 = { polygon_id: { 'vertices': vertices2, 'area': area2, 'faces': cycle2[:-1] } }
 
     polygon_arr.update(polygon_new_1)
@@ -103,8 +103,9 @@ def add_line_segment(segments_dict, polygon_arr, angles='uniform') -> Tuple[List
 
     Returns:
     - Updated line_segments list.
-    """
+    """    
     polygon_id, polygon = pick_item_with_probability(polygon_arr)
+    
     line_segments_to_check = [segments_dict[segment] for segment in polygon['faces']]
     
     location_new = sample_in_polygon(polygon['vertices'])
@@ -160,12 +161,13 @@ def add_line_segment(segments_dict, polygon_arr, angles='uniform') -> Tuple[List
         intersections_f = [intersection for intersection in intersection_points if intersection["point"][1] > line_new.location[1]]
 
     # Determine correct segment length
-    id = str(len(polygon_arr)+1)
+    id = str(len(segments_dict)-3)
+
     start = min(intersections_b, key=lambda x: x["segment_length"])
     end = min(intersections_f, key=lambda x: x["segment_length"])
     
     # Add new segment object with corresponding neighbors
-    neighbors_initial = {}  
+    neighbors_initial = {}
     neighbors_initial[start["id"]] = start["point"]
     neighbors_initial[end["id"]] = end["point"]
     segment_new = LineSegment(start=start["point"], end=end["point"], id=id, neighbors_initial=neighbors_initial, neighbors=neighbors_initial)
@@ -177,8 +179,8 @@ def add_line_segment(segments_dict, polygon_arr, angles='uniform') -> Tuple[List
     
     vertex_begin = start["point"]
     vertex_end = end["point"]
-    polygon_arr = update_polygon_arr(polygon_id=polygon_id, polygon_arr=polygon_arr, neighbor1=start["id"], neighbor2=end["id"], vertex_begin=vertex_begin, vertex_end=vertex_end, id=id)
-
+    polygon_arr = update_polygon_arr(polygon_id=polygon_id, polygon_arr=polygon_arr, neighbor1=start["id"], neighbor2=end["id"], vertex_begin=vertex_begin, vertex_end=vertex_end)
+    
     return segments_dict, polygon_arr
 
 def generate_line_segments(size: int, angles='uniform') -> Tuple[nx.Graph, List[LineSegment]]:
@@ -198,7 +200,7 @@ def generate_line_segments(size: int, angles='uniform') -> Tuple[nx.Graph, List[
         LineSegment((1, 1), (1, 0), id='b4', neighbors_initial={'b1': (1, 0), 'b3': (1, 1)}, neighbors={'b1': (1, 0), 'b3': (1, 1)})
     ]
     
-    polygon_arr = { '1': { 'vertices': [(0,0), (0,1), (1,1), (1,0)], 'area': 1, 'faces': [ 'b1', 'b2', 'b3', 'b4' ] } }
+    polygon_arr = { 'p1': { 'vertices': [(0,0), (0,1), (1,1), (1,0)], 'area': 1, 'faces': [ 'b1', 'b2', 'b3', 'b4' ] } }
     
     segments = borders
     segments_dict = {segment.id: segment for segment in segments}
