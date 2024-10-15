@@ -2,6 +2,7 @@ import numpy as np
 import random
 from shapely.geometry import LineString
 from typing import List, Dict, Any, Tuple
+import matplotlib.pyplot as plt
 
 from .Classes import LineSegment
 
@@ -88,7 +89,7 @@ def update_for_border_intersections(lines: List[Dict[str, Any]]) -> List[Dict[st
             
     return lines
 
-def check_and_update_when_intersect(lines: List[Dict[str, Any]], epsilon: float) -> List[Dict[str, Any]]:
+def check_and_update_when_intersect(lines: List[Dict[str, Any]], epsilon: float, dt: float) -> List[Dict[str, Any]]:
     """
     Check for intersections between lines and update their properties accordingly.
 
@@ -99,36 +100,37 @@ def check_and_update_when_intersect(lines: List[Dict[str, Any]], epsilon: float)
     Returns:
         List[Dict[str, Any]]: The updated list of lines after handling intersections.
     """
+        
     for index1, j1 in enumerate(lines):
         for index2, j2 in enumerate(lines):
             if j1['id'][:-2] == j2['id'][:-2] or index2 < index1:
                 continue
-                
+            
             if j1['growth_status'] == False and j2['growth_status'] == False:
                 continue
-                
+            
             line1 = LineString([j1['start'], j1['end']])
             line2 = LineString([j2['start'], j2['end']])
-
+            
             intersection_pt = line1.intersection(line2)
 
             if not intersection_pt.is_empty:
                 d1 = np.linalg.norm(np.array(j1['start']) - np.array([intersection_pt.x, intersection_pt.y]))
                 d2 = np.linalg.norm(np.array(j2['start']) - np.array([intersection_pt.x, intersection_pt.y]))
                 
-                arrival_1 = j1['introduction_time'] + d1 / epsilon
-                arrival_2 = j2['introduction_time'] + d2 / epsilon
+                arrival_1 = j1['introduction_time'] + d1 / epsilon * dt
+                arrival_2 = j2['introduction_time'] + d2 / epsilon * dt
 
                 if arrival_1 > arrival_2:
                     lines[index1]['end'] = (intersection_pt.x, intersection_pt.y)
                     lines[index1]['neighbors_initial'] = lines[index1]['neighbors_initial'] + [j2['id'][:-2]]
-                    lines[index1]['growth_status'] = False
+                    lines[index1]['growth_status'] = False                    
 
                 else:                        
                     lines[index2]['end'] = (intersection_pt.x, intersection_pt.y)
                     lines[index2]['neighbors_initial'] = lines[index2]['neighbors_initial'] + [j1['id'][:-2]]
                     lines[index2]['growth_status'] = False
-                    
+
     return lines
 
 def transform_to_standard_lines(lines: List[Dict[str, Any]]) -> List[LineSegment]:
@@ -173,7 +175,7 @@ def generate_line_segments_dynamic(size: int, dt: float, epsilon: float, time: f
     """
     lines = []
     line_id, t, t_total = 1, 0, 0
-
+    
     # Stop loop whenever we have enough lines and all lines have stopped growing
     while len(lines) / 2 < size or np.any([item['growth_status'] for item in lines]):
 
@@ -185,17 +187,18 @@ def generate_line_segments_dynamic(size: int, dt: float, epsilon: float, time: f
             if time == 0:
                 number_of_lines_to_add = size
             else:
-                number_of_lines_to_add = int(t - (t % time))
+                number_of_lines_to_add = int(t / time)
+                
             for _ in range(number_of_lines_to_add):
                 lines = add_new_line(lines, line_id, t_total, angles=angles)
                 line_id += 1
-            
-                t = 0
+                
+            t = 0
 
         lines = grow_lines(lines, epsilon)
         lines = update_for_border_intersections(lines)
-        lines = check_and_update_when_intersect(lines, epsilon)
-
+        lines = check_and_update_when_intersect(lines, epsilon, dt)
+        
     lines = transform_to_standard_lines(lines)
         
     return lines
