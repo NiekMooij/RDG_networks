@@ -606,8 +606,8 @@ def generate_line_segments_thickness(
             angles = [config[i]['angle']]
         else:
             nucleation_point = None
-            if angles != 'uniform':
-                angles=[angles[i]]
+            # if angles != 'uniform':
+            #     angles=[angles[i]]
 
         output = add_line_segment(segments_dict, 
                                     polygon_arr, 

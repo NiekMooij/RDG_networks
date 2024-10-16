@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='RDG-Networks',
-    version='0.3.6',
+    version='0.3.7',
     author='Niek Mooij',
     author_email='mooij.niek@gmail.com',
     description='Most of the code from the RDG Networks project',
@@ -38,6 +38,7 @@ setup(
             'generate_line_segments_dynamic=RDG_networks.generate_line_segments_dynamic:main',
 
             'generate_line_segments_static=RDG_networks.generate_line_segments_static:main',
+            'generate_line_segments_thickness_static=RDG_networks.generate_line_segments_thickness_static:main',
 
             'generate_line_network=RDG_networks.generate_line_network:main',
 

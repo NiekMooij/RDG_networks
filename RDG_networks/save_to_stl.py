@@ -87,7 +87,7 @@ def merge_3d_meshes(mesh_list):
     
     return merged_mesh
 
-def save_to_stl(seg_thick_dict, thickness, name):
+def save_to_stl(seg_thick_dict, thickness, name, frame_thickness = None):
     mesh_list = []
     for k,v in seg_thick_dict.items():
         p = [] 
@@ -98,6 +98,18 @@ def save_to_stl(seg_thick_dict, thickness, name):
                 None
         
         mesh_list.append(polygon_to_3d_mesh(Polygon(p), thickness=thickness))
+    
+    if frame_thickness != None:
+        t = frame_thickness
+        bottom = Polygon([ (0,0-t), (0,0),(1,0),(1,0-t)])
+        top = Polygon([(0,1),(0,1+t), (1,1+t), (1,1)])
+        right = Polygon([(1,0-t), (1,1+t), (1+t,1+t), (1+t,0-t)])
+        left = Polygon([(0-t,0-t),(0-t,1+t), (0,1+t), (0,0-t)])
+
+        f = [bottom,top,  right, left]
+
+        for f_ in f:            
+            mesh_list.append(polygon_to_3d_mesh(f_, thickness=thickness))
 
     merged_mesh = merge_3d_meshes(mesh_list)
 

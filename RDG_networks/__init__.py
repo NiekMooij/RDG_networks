@@ -9,6 +9,7 @@ from .generate_line_segments_static import generate_line_segments_static
 from .draw_segments import draw_segments
 from .thickness.generate_line_segments_thickness import generate_line_segments_thickness
 from .thickness.generate_line_segments_thickness_orientation import generate_line_segments_thickness_orientation
+from .thickness.generate_line_segments_thickness_static import generate_line_segments_thickness_static
 from .thickness.generate_line_segments_thickness_orientation import translate_network
 from .thickness.generate_line_segments_thickness_orientation import clip_network
 from .thickness.generate_line_segments_thickness_orientation import rotate_network
@@ -22,8 +23,9 @@ __all__ = ['generate_line_segments',
            'clip_network',
            'rotate_network',
            'get_alignment_mean',
-           'generate_line_segments_dynamic',
            'generate_line_segments_static',
+           'generate_line_segments_thickness_static',
+           'generate_line_segments_dynamic',
            'generate_line_network',
            'get_intersection_segments',
            'draw_segments', 
