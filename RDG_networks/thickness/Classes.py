@@ -3,6 +3,7 @@ import matplotlib.axes._axes as axes
 from matplotlib.patches import Polygon as polgon
 import numpy as np
 from typing import List, Tuple, Union, Optional
+import json
 
 class Line:
     """
@@ -87,6 +88,21 @@ class LineSegment:
         """
         return copy.deepcopy(self)
     
+    def to_dict(self) -> dict:
+        """
+        Convert the LineSegment object to a dictionary.
+
+        Returns:
+        - dict: A dictionary representation of the LineSegment object.
+        """
+        return {
+            'start': self.start,
+            'end': self.end,
+            'id': self.id,
+            'neighbors_initial': self.neighbors_initial,
+            'neighbors': self.neighbors
+        }
+    
 class Polygon:
     """
     Represents a polygon defined by a list of vertices.
@@ -95,7 +111,7 @@ class Polygon:
         vertices (List[Tuple[float, float]]): A list of (x, y) coordinates representing the vertices of the polygon.
     """
 
-    def __init__(self, vertices: List[tuple], middle_segment=None):
+    def __init__(self, vertices: List[tuple], middle_segment=None, neighbors=None):
         """
         Initializes a Polygon instance with the provided vertices.
 
@@ -104,6 +120,7 @@ class Polygon:
         """
         self.vertices = vertices
         self.middle_segment = middle_segment
+        self.neighbors = neighbors
 
     def area(self) -> float:
         """
@@ -177,6 +194,19 @@ class Polygon:
             x2, y2 = self.vertices[(i + 1) % len(self.vertices)]
             perimeter += np.sqrt((x1-x2)**2 + (y1-y2)**2)
         return perimeter
+    
+    def to_dict(self) -> dict:
+        """
+        Convert the Polygon object to a dictionary.
+
+        Returns:
+            dict: A dictionary representation of the Polygon object.
+        """
+        return {
+            'vertices': self.vertices,
+            'middle_segment': self.middle_segment.to_dict(),
+            'neighbors': self.neighbors
+        }
         
 class Cycle:
     def __init__(self, vertices, id=None):

@@ -105,7 +105,7 @@ def seeds(number_of_lines, radius = 0.015, number_of_trials = 10000):
         if trial <= number_of_trials:
             nucleation_points += [new_points]
             angles = [0, np.pi/4, np.pi/2, 3*np.pi/4]
-            angle_new = random.uniform(0, 2*np.pi) #random.choice(angles)#np.pi #random.uniform(0, 2*np.pi)
+            angle_new = random.uniform(0, 2*np.pi)
             angle += [angle_new]
             Line[line_id] = [ new_points ,angle_new]
             line_id += 1

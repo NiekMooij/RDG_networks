@@ -1,8 +1,8 @@
 import numpy as np
+import math
 from typing import List, Dict, Tuple
 from shapely.geometry import Polygon as Polygon_Shapely
 from shapely.geometry import LineString, box
-from concurrent.futures import ProcessPoolExecutor
 from .Classes import LineSegment, Polygon
 
 def rotate(point, center, rotation_matrix):
@@ -13,7 +13,9 @@ def rotate(point, center, rotation_matrix):
     rotation_matrix: 2x2 numpy array representing the rotation matrix
     """
     translated_point = point - center
-    rotated_point = np.dot(rotation_matrix, translated_point)
+
+    # rotated_point = np.dot(rotation_matrix, translated_point)
+    rotated_point = rotation_matrix@translated_point
     final_point = rotated_point + center
 
     return final_point
@@ -30,16 +32,22 @@ def angle_between(v1, v2):
 
 def get_alignment_mean(line_vector_arr, director):
     """Get the mean alignment."""
-    S_all = []
+    S_all = 0
+    total_mass = 0
     for item in line_vector_arr:
         line_vector = item['line_vector']
+        vector_diff = np.array(line_vector[1]) - np.array(line_vector[0])
+
         area = item['area']
-        P2 = 0.5*(3*(np.cos(angle_between(line_vector, director)))**2-1)
-        S_all.append(P2*area)
+        align = math.cos(angle_between(vector_diff, director))**2
+        S_all += align*area
+        total_mass += area
 
-    return float(np.mean(S_all))
+    output = S_all / total_mass
 
-def compute_alignment_for_angle(
+    return output
+
+def compute_alignment(
     angle: float, 
     segment_thickness_dict: dict[str, Polygon],
     director: np.ndarray, 
@@ -69,7 +77,7 @@ def compute_alignment_for_angle(
     tuple[float, float]
         A tuple where the first element is the input angle and the second element is the computed alignment value.
     """
-    box_center = (np.array(box_measurements[0]) + np.array(box_measurements[2])) / 2
+    box_center = np.array((box_measurements[0]) + np.array(box_measurements[2])) / 2
 
     # Rotate network
     segment_thickness_dict_new = rotate_network(segment_thickness_dict, rotate_angle=angle, box_center=box_center)
@@ -79,12 +87,37 @@ def compute_alignment_for_angle(
 
     line_vectors = [
         {'line_vector': [seg.middle_segment.start, seg.middle_segment.end], 'area': seg.area()}
-        for seg in segment_thickness_dict_new.values()
+        for seg in segment_thickness_dict_new.values() if seg.middle_segment is not None
     ]
 
     alignment = get_alignment_mean(line_vectors, director)
-
+    
     return angle, alignment
+
+def get_max_alignment(
+    segment_thickness_dict: dict, 
+    director: np.ndarray, 
+    box_measurements: list[float], 
+    grid_points: int = 360
+) -> float:
+    """Find the angle with the maximum alignment using parallel processing."""
+    # Create a list of angles to evaluate
+    angles = np.linspace(0, np.pi, grid_points)
+
+    results = []
+    for a in angles:
+        result = compute_alignment(a, segment_thickness_dict, director, box_measurements)
+        results.append(result)
+
+    # Find the angle with the maximum alignment
+    max_alignment = 0
+    max_angle = None
+    for angle, alignment in results:
+        if alignment > max_alignment:
+            max_alignment = alignment
+            max_angle = angle
+
+    return max_angle
 
 def rotate_network(
     segment_thickness_dict: dict[str, Polygon],
@@ -137,7 +170,7 @@ def rotate_network(
         middle_segment_new = LineSegment(start=start, end=end)
         
         # Store the rotated segment in the new dictionary
-        segment_thickness_dict_new[id] = Polygon(vertices=vertices_new, middle_segment=middle_segment_new)
+        segment_thickness_dict_new[id] = Polygon(vertices=vertices_new, middle_segment=middle_segment_new, neighbors=segment.neighbors)
 
     return segment_thickness_dict_new
 
@@ -204,7 +237,7 @@ def clip_network(
                 middle_segment_new = LineSegment(start=start, end=end)
 
             # Create a new clipped polygon with updated vertices and middle segment
-            pol_new = Polygon(vertices=vertices_new, middle_segment=middle_segment_new)
+            pol_new = Polygon(vertices=vertices_new, middle_segment=middle_segment_new, neighbors=segment.neighbors)
             pol_new.sort_vertices()  # Ensure vertices are sorted
             segment_thickness_dict_new[id] = pol_new
 
@@ -252,78 +285,16 @@ def translate_network(
             middle_segment_new = LineSegment(start=start, end=end)
         
         # Store the translated segment in the new dictionary
-        segment_thickness_dict_new[id] = Polygon(vertices=vertices_new, middle_segment=middle_segment_new)
+        segment_thickness_dict_new[id] = Polygon(vertices=vertices_new, middle_segment=middle_segment_new, neighbors=segment.neighbors)
 
     return segment_thickness_dict_new
 
-def get_alignment_mean(line_vector_arr, director):
-    """Get the mean alignment."""
-    S_all = []
-    for item in line_vector_arr:
-        line_vector = item['line_vector']
-        area = item['area']
-        P2 = 0.5*(3*(np.cos(angle_between(line_vector, director)))**2-1)
-        S_all.append(P2*area)
-
-    return float(np.mean(S_all))
-
-def compute_alignment_for_angle(
-    segment_thickness_dict: dict,
-    angle: float, 
-    box_center,
-    director: np.ndarray, 
-) -> tuple[float, float]:
-    """Compute the alignment for a given angle."""
-    
-    # Rotate the segment network for the given angle
-    segment_thickness_dict_rotated = rotate_network(segment_thickness_dict, rotate_angle=angle, box_center=box_center)
-    
-    # Create line vectors from the rotated segments
-    line_vectors = [] 
-    for s in segment_thickness_dict_rotated.values():
-        line_vectors.append({'line_vector': np.array([s.middle_segment.start, s.middle_segment.end]), 'area': s.area()})
-
-    # Compute the alignment for the current angle
-    alignment = get_alignment_mean(line_vectors, director)
-    return angle, alignment
-
-def get_max_alignment_angle(
-    segment_thickness_dict: dict, 
-    director: np.ndarray, 
-    box_measurements: list[float], 
-    grid_points: int = 360
-) -> float:
-    """Find the angle with the maximum alignment using parallel processing."""
-    
-    # Create a list of angles to evaluate
-    angles = np.linspace(0, 2 * np.pi, grid_points)
-
-    # Use ProcessPoolExecutor for parallel computation of alignment
-    with ProcessPoolExecutor() as executor:
-        # Submit tasks to the pool for each angle
-        results = list(executor.map(
-            compute_alignment_for_angle, 
-            [segment_thickness_dict] * len(angles),  # Same segment dictionary for all angles
-            angles,                                 # Different angles
-            [box_measurements] * len(angles),       # Same box measurements for all angles
-            [director] * len(angles)                # Same director for all angles
-        ))
-
-    # Find the angle with the maximum alignment
-    max_alignment = 0
-    max_angle = 0
-    for angle, alignment in results:
-        if alignment > max_alignment:
-            max_alignment = alignment
-            max_angle = angle
-
-    return max_angle
-
-def generate_line_segments_thickness_orientation(
+def orientate_network(
     data_dict: Dict[str, dict], 
     orientation: List[int], 
     grid_points: int = 360, 
-    box_measurements: List[Tuple[float, float]] = [(0, 0), (0, 1), (1, 1), (1, 0)]
+    box_measurements: List[Tuple[float, float]] = [(0, 0), (0, 1), (1, 1), (1, 0)],
+    director: np.ndarray = np.array([0, 1])
 ) -> List[Dict[str, dict]]:
     """
     Generates a set of networks of line segments with different thicknesses and orientations, and clips them to fit 
@@ -354,36 +325,33 @@ def generate_line_segments_thickness_orientation(
     
     # Extract the segment thickness dictionary from the input data
     segment_thickness_dict = data_dict['segment_thickness_dict']
-
-    # Define the director vector along the y-axis
-    director = np.array([0, 1])
     
     # Find the angle that aligns the network most with the y-axis
-    max_angle = get_max_alignment_angle(segment_thickness_dict, director, box_measurements, grid_points)
-
+    max_angle = get_max_alignment(segment_thickness_dict, director, box_measurements, grid_points)
+    
     # Store the initial unmodified configuration
     output = [{'orientation': 'original', 'data_dict': data_dict}]
     
     # Loop through each given orientation, rotate, clip, and translate the network
     for o in orientation:
         # Compute the rotation angle for the current orientation relative to max alignment
-        rotate_angle = o - max_angle
+        rotate_angle = -max_angle + o
         
         # Rotate the network by the computed angle
-        segment_thickness_dict_new = rotate_network(segment_thickness_dict, rotate_angle=rotate_angle, box_center=box_center)
+        segment_thickness_dict_rotated = rotate_network(segment_thickness_dict, rotate_angle=rotate_angle, box_center=box_center)
 
         # Clip the rotated network to fit within the bounding box
-        segment_thickness_dict_new = clip_network(segment_thickness_dict_new, box_measurements=box_measurements)
+        segment_thickness_dict_clipped = clip_network(segment_thickness_dict_rotated, box_measurements=box_measurements)
 
         # Translate the clipped network to start at the origin (0,0)
         translation_vector = -np.array(box_measurements[0])
-        segment_thickness_dict_new = translate_network(segment_thickness_dict_new, translation_vector)
+        segment_thickness_dict_translated = translate_network(segment_thickness_dict_clipped, translation_vector)
     
         # Prepare a new data dictionary with the transformed segment information
         data_dict_new = {
             'segments_dict': None,
             'polygon_arr': None,
-            'segment_thickness_dict': segment_thickness_dict_new,
+            'segment_thickness_dict': segment_thickness_dict_translated,
             'jammed': None,
             'generated_config': None
         }

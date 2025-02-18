@@ -417,7 +417,7 @@ def update_data(
     segments_dict[segment_new_1.id] = segment_new_1
     segments_dict[neighbor1_1].neighbors[id_1] = vertex_begin_1
     segments_dict[neighbor1_2].neighbors[id_1] = vertex_end_1
-
+    
     # Update the segments_dict for the second segment
     neighbors_initial_2 = {
         neighbor2_1: vertex_begin_2,
@@ -435,20 +435,7 @@ def update_data(
     segments_dict[neighbor2_2].neighbors[id_2] = vertex_end_2
     
     # Update the segment_thickness_dict with the base polygon
-    neighbors = cycle0.copy()
-    neighbors.remove(f'{len(segment_thickness_dict)+1}_1')
-    neighbors.remove(f'{len(segment_thickness_dict)+1}_2')
-    neighbors = [ i[:-2] if i not in ['b1', 'b2', 'b3', 'b4'] else i for i in neighbors ]
-    neighbors = list(set(neighbors))
-
-    segment_thickness_dict[len(segment_thickness_dict) + 1] = Polygon(vertices=vertices0, neighbors=neighbors)
-
-    for n in neighbors:
-        if n in ['b1', 'b2', 'b3', 'b4']:
-            continue
-
-        else:
-            segment_thickness_dict[int(n)].neighbors.append(len(segment_thickness_dict) + 1)
+    segment_thickness_dict[len(segment_thickness_dict) + 1] = Polygon(vertices=vertices0)
     
     return segments_dict, polygon_arr, segment_thickness_dict
     
@@ -604,13 +591,14 @@ def generate_line_segments_thickness(
         size = len(config)
 
     jammed = False
-    nucleation_points = []
     for i in range(size):
         if config:
             nucleation_point = config[i]['location']
             angles = [config[i]['angle']]
         else:
             nucleation_point = None
+            # if angles != 'uniform':
+            #     angles=[angles[i]]
 
         output = add_line_segment(segments_dict, 
                                     polygon_arr, 
@@ -624,12 +612,10 @@ def generate_line_segments_thickness(
             segments_dict, polygon_arr, segment_thickness_dict, location, angle = output
             generated_config.append({ 'location': location, 'angle': angle, 'thickness': thickness_arr[i] })
 
-            nucleation_points.append(location)
-
         else:
             if config:
                 print('Configuration not possible. Point is skipped.')
-            else:
+            else:    
                 print(f"Stopped at iteration {len(segment_thickness_dict)}, could not find a valid segment position.")
                 jammed = True
                 break

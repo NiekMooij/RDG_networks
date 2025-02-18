@@ -8,17 +8,17 @@ from .generate_line_segments_dynamic import generate_line_segments_dynamic
 from .generate_line_segments_static import generate_line_segments_static
 from .draw_segments import draw_segments
 from .thickness.generate_line_segments_thickness import generate_line_segments_thickness
-from .thickness.generate_line_segments_thickness_orientation import generate_line_segments_thickness_orientation
+from .thickness.orientate_network import orientate_network
 from .thickness.generate_line_segments_thickness_static import generate_line_segments_thickness_static
-from .thickness.generate_line_segments_thickness_orientation import translate_network
-from .thickness.generate_line_segments_thickness_orientation import clip_network
-from .thickness.generate_line_segments_thickness_orientation import rotate_network
-from .thickness.generate_line_segments_thickness_orientation import get_alignment_mean
-from .save_to_stl import save_to_stl
+from .thickness.orientate_network import translate_network
+from .thickness.orientate_network import clip_network
+from .thickness.orientate_network import rotate_network
+from .thickness.orientate_network import get_alignment_mean
+from .save_data import save_to_stl, save_to_json, load_from_json
 
 __all__ = ['generate_line_segments', 
            'generate_line_segments_thickness',
-           'generate_line_segments_thickness_orientation',
+           'orientate_network',
            'translate_network',
            'clip_network',
            'rotate_network',
@@ -33,5 +33,7 @@ __all__ = ['generate_line_segments',
            'Line', 
            'LineSegment', 
            'Polygon',
-           'save_to_stl'
+           'save_to_stl',
+           'save_to_json',
+           'load_from_json'
            ]
