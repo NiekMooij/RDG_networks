@@ -170,7 +170,11 @@ def add_line_segment(segments_dict, polygon_arr, angles='uniform') -> Tuple[List
     neighbors_initial = {}
     neighbors_initial[start["id"]] = start["point"]
     neighbors_initial[end["id"]] = end["point"]
-    segment_new = LineSegment(start=start["point"], end=end["point"], id=id, neighbors_initial=neighbors_initial, neighbors=neighbors_initial)
+
+    neighbors = {}
+    neighbors[start["id"]] = start["point"]
+    neighbors[end["id"]] = end["point"]
+    segment_new = LineSegment(start=start["point"], end=end["point"], id=id, neighbors_initial=neighbors_initial, neighbors=neighbors)
         
     segments_dict[segment_new.id] = segment_new
     

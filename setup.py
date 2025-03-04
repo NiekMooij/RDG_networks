@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='RDG-Networks',
-    version='0.3.12',
+    version='0.3.14',
     author='Niek Mooij',
     author_email='mooij.niek@gmail.com',
     description='RDG Networks project',

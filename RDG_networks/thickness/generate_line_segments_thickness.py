@@ -441,7 +441,9 @@ def update_data(
     neighbors = [ i[:-2] if i not in ['b1', 'b2', 'b3', 'b4'] else i for i in neighbors ]
     neighbors = list(set(neighbors))
 
-    segment_thickness_dict[len(segment_thickness_dict) + 1] = Polygon(vertices=vertices0, neighbors=neighbors)
+    neighbors_initial = list(set(neighbors))
+
+    segment_thickness_dict[len(segment_thickness_dict) + 1] = Polygon(vertices=vertices0, neighbors=neighbors, neighbors_initial=neighbors_initial)
 
     for n in neighbors:
         if n in ['b1', 'b2', 'b3', 'b4']:
