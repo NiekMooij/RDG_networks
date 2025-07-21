@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='RDG-Networks',
-    version='0.3.14',
+    version='0.3.15',
     author='Niek Mooij',
     author_email='mooij.niek@gmail.com',
     description='RDG Networks project',
@@ -25,6 +25,7 @@ setup(
         'console_scripts': [
             'generate_line_segments=RDG_networks.generate_line_segments:main',
             'generate_line_segments_thickness=RDG_networks.thickness.generate_line_segments_thickness:main',
+            'generate_line_segments_thickness_config=RDG_networks.thickness.generate_line_segments_thickness_config:main',
             
             'orientate_network=RDG_networks.thickness.orientate_network:main',
 

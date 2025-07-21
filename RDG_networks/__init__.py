@@ -8,6 +8,7 @@ from .generate_line_segments_dynamic import generate_line_segments_dynamic
 from .generate_line_segments_static import generate_line_segments_static
 from .draw_segments import draw_segments
 from .thickness.generate_line_segments_thickness import generate_line_segments_thickness
+from .thickness.generate_line_segments_thickness_config import generate_line_segments_thickness_config
 from .thickness.orientate_network import orientate_network
 from .thickness.generate_line_segments_thickness_static import generate_line_segments_thickness_static
 from .thickness.orientate_network import translate_network
@@ -18,6 +19,7 @@ from .save_data import save_to_stl, save_to_json, load_from_json
 
 __all__ = ['generate_line_segments', 
            'generate_line_segments_thickness',
+           'generate_line_segments_thickness_config',
            'orientate_network',
            'translate_network',
            'clip_network',

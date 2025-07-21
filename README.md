@@ -25,6 +25,7 @@ This Python package provides code regarding the RDG networks project.
 
 ### Thickness
 - **generate_line_segments_thickness:** Generates segment network with thicknesses
+- **generate_line_segments_thickness_config:** Generates segment network with thicknesses (you are able to provide nucleation points as well).
 - **orientate_network:** Generates various rotated versions of the initial network.
 
 - **save_to_stl:** Saves the network as a stl file.
@@ -99,6 +100,8 @@ data = load_from_json(file_path)
 # Display the plot
 plt.show()
 ```
+
+Some additional examples can be found in the folder *Examples*.
 
 ## Configuration
 No specific configuration is required.
