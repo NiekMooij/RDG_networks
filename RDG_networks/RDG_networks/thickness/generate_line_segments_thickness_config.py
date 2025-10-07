@@ -106,38 +106,38 @@ def doSegmentsIntersect(
     # Otherwise, return False and no intersection point
     return False, (None, None)
 
-def pick_item_with_probability(
-    polygon_arr: Dict[str, Dict[str, object]]
-) -> Tuple[str, Dict[str, object]]:
-    """
-    Randomly selects an item from the polygon array with a probability proportional to the area of the polygons.
+# def pick_item_with_probability(
+#     polygon_arr: Dict[str, Dict[str, object]]
+# ) -> Tuple[str, Dict[str, object]]:
+#     """
+#     Randomly selects an item from the polygon array with a probability proportional to the area of the polygons.
 
-    Args:
-        polygon_arr (Dict[str, Dict[str, object]]): 
-            A dictionary where keys are polygon identifiers (e.g., 'p1', 'p2') and values are dictionaries containing polygon properties, 
-            including an 'area' key that stores the area of the polygon.
+#     Args:
+#         polygon_arr (Dict[str, Dict[str, object]]): 
+#             A dictionary where keys are polygon identifiers (e.g., 'p1', 'p2') and values are dictionaries containing polygon properties, 
+#             including an 'area' key that stores the area of the polygon.
 
-    Returns:
-        Tuple[str, Dict[str, object]]: 
-            - The identifier of the selected polygon.
-            - The corresponding polygon data (dictionary) containing its properties.
-    """
+#     Returns:
+#         Tuple[str, Dict[str, object]]: 
+#             - The identifier of the selected polygon.
+#             - The corresponding polygon data (dictionary) containing its properties.
+#     """
     
-    # Calculate the total weight (sum of areas of all polygons)
-    max_weight = sum(pol['area'] for pol in polygon_arr.values())
+#     # Calculate the total weight (sum of areas of all polygons)
+#     max_weight = sum(pol['area'] for pol in polygon_arr.values())
     
-    # Generate a random threshold between 0 and the total weight
-    threshold = random.uniform(0, max_weight)
-    cumulative_weight = 0
+#     # Generate a random threshold between 0 and the total weight
+#     threshold = random.uniform(0, max_weight)
+#     cumulative_weight = 0
     
-    # Iterate through the polygons, accumulating weights
-    for item, pol in polygon_arr.items():
-        weight = pol['area']
-        cumulative_weight += weight
+#     # Iterate through the polygons, accumulating weights
+#     for item, pol in polygon_arr.items():
+#         weight = pol['area']
+#         cumulative_weight += weight
         
-        # Return the polygon when the cumulative weight surpasses the threshold
-        if cumulative_weight >= threshold:
-            return item, pol
+#         # Return the polygon when the cumulative weight surpasses the threshold
+#         if cumulative_weight >= threshold:
+#             return item, pol
 
 def get_location_and_direction(
     polygon_arr: Dict[str, Dict[str, object]], 
@@ -145,71 +145,31 @@ def get_location_and_direction(
     angle: float,
     nucleation_point: Tuple[float, float] = None,
     min_distance: float = 0,
-    max_attempts: int = 1000
 ) -> Union[Tuple[str, Dict[str, object], Tuple[float, float], np.ndarray, np.ndarray], bool]:
-    """
-    Attempts to find a valid location and direction within a polygon for placing a new segment. The direction can either be randomly 
-    chosen (uniformly) or from a specified list of angles. It ensures that the segment lies within the polygon's bounds given the 
-    specified thickness.
-
-    Args:
-        polygon_arr (Dict[str, Dict[str, object]]): 
-            A dictionary where the keys are polygon identifiers and the values are dictionaries containing polygon properties, including 'vertices'.
-        thickness (float): 
-            The thickness of the segment that needs to fit inside the polygon.
-        max_attempts (int, optional): 
-            The maximum number of attempts to find a valid location and direction. Defaults to 1000.
-        angle (float): 
-            A float indicating the angle of the new segment.
-        nucleation_point (Tuple[float, float], optional): 
-            predified nucleation point for the segment. Defaults to None.
-        min_distance (float, optional): 
-            the minimum distance between two lines. Defaults to 0.
-
-    Returns:
-        Union[Tuple[str, Dict[str, object], Tuple[float, float], np.ndarray, np.ndarray], bool]:
-            - If a valid location and direction are found, returns a tuple containing:
-                - The polygon ID (`str`).
-                - The polygon data (`Dict[str, object]`).
-                - The new location as a tuple of floats (`Tuple[float, float]`).
-                - The direction vector as a numpy array (`np.ndarray`).
-                - The perpendicular vector to the direction as a numpy array (`np.ndarray`).
-                - The nucleation point [x,y] of the segment
-                - The angle of the segment.
-            - Returns `False` if no valid location and direction are found after the maximum attempts.
-    """
+   
     direction = (np.cos(angle), np.sin(angle))
     direction = np.array(direction) / np.linalg.norm(direction)
     
     # Try to find a valid location and direction up to max_attempts
-    attempt = 0
-    while attempt < max_attempts:
-        polygon_id, polygon = pick_item_with_probability(polygon_arr)
-        
-        # Sample a location within the polygon
-        #check if nucleation point is given
-        if nucleation_point is not None:
-            location_new = nucleation_point
-        else:
-            location_new = sample_in_polygon(polygon['vertices'])
-        
-        # Compute the perpendicular vector to the direction
-        perpendicular = np.array([direction[1], -direction[0]])
-        perpendicular = perpendicular / np.linalg.norm(perpendicular)
-        
-        # Ensure the perpendicular vector is oriented consistently (y-component is non-negative)
-        if perpendicular[1] < 0:
-            perpendicular = -perpendicular
-        
-        # Compute the positions for the segment with thickness, shifted by half-thickness along the perpendicular direction
-        p1 = np.array(location_new) + (thickness/2 + min_distance) * perpendicular 
-        p2 = np.array(location_new) - (thickness/2 + min_distance) * perpendicular
-        
-        # Check if both endpoints of the segment are inside the polygon
-        if is_inside_polygon(polygon['vertices'], p1) and is_inside_polygon(polygon['vertices'], p2):
-            return polygon_id, polygon, location_new, direction, perpendicular, angle
-        
-        attempt += 1
+    for polygon_id, polygon in polygon_arr.items():      
+        if is_inside_polygon(polygon['vertices'], nucleation_point):
+            break
+
+    # Compute the perpendicular vector to the direction
+    perpendicular = np.array([direction[1], -direction[0]])
+    perpendicular = perpendicular / np.linalg.norm(perpendicular)
+    
+    # Ensure the perpendicular vector is oriented consistently (y-component is non-negative)
+    if perpendicular[1] < 0:
+        perpendicular = -perpendicular
+    
+    # Compute the positions for the segment with thickness, shifted by half-thickness along the perpendicular direction
+    p1 = np.array(nucleation_point) + (thickness/2 + min_distance) * perpendicular 
+    p2 = np.array(nucleation_point) - (thickness/2 + min_distance) * perpendicular
+    
+    # Check if both endpoints of the segment are inside the polygon
+    if is_inside_polygon(polygon['vertices'], p1) and is_inside_polygon(polygon['vertices'], p2):
+        return polygon_id, polygon, nucleation_point, direction, perpendicular, angle
     
     # If no valid location and direction is found, return False
     return False
@@ -417,7 +377,7 @@ def update_data(
     segments_dict[segment_new_1.id] = segment_new_1
     segments_dict[neighbor1_1].neighbors[id_1] = vertex_begin_1
     segments_dict[neighbor1_2].neighbors[id_1] = vertex_end_1
-    
+
     # Update the segments_dict for the second segment
     neighbors_initial_2 = {
         neighbor2_1: vertex_begin_2,
@@ -435,7 +395,22 @@ def update_data(
     segments_dict[neighbor2_2].neighbors[id_2] = vertex_end_2
     
     # Update the segment_thickness_dict with the base polygon
-    segment_thickness_dict[len(segment_thickness_dict) + 1] = Polygon(vertices=vertices0)
+    neighbors = cycle0.copy()
+    neighbors.remove(f'{len(segment_thickness_dict)+1}_1')
+    neighbors.remove(f'{len(segment_thickness_dict)+1}_2')
+    neighbors = [ i[:-2] if i not in ['b1', 'b2', 'b3', 'b4'] else i for i in neighbors ]
+    neighbors = list(set(neighbors))
+
+    neighbors_initial = list(set(neighbors))
+
+    segment_thickness_dict[len(segment_thickness_dict) + 1] = Polygon(vertices=vertices0, neighbors=neighbors, neighbors_initial=neighbors_initial)
+
+    for n in neighbors:
+        if n in ['b1', 'b2', 'b3', 'b4']:
+            continue
+
+        else:
+            segment_thickness_dict[int(n)].neighbors.append(len(segment_thickness_dict) + 1)
     
     return segments_dict, polygon_arr, segment_thickness_dict
     
@@ -448,7 +423,6 @@ def add_line_segment(
     nucleation_point: Tuple[float, float] = None,
     min_distance: float = 0,
     box_size: float = 1,
-    max_attempts: int = 1000
 ) -> Union[Tuple[Dict[int, LineSegment], Dict[str, Dict[str, object]], Dict[int, Polygon], List[float], float], bool]:
     """
     Adds a new line segment to the segments and polygon data structures, with a given thickness and angle distribution.
@@ -472,11 +446,11 @@ def add_line_segment(
     """
     
     # Get a valid location and direction, or return False if none is found
-    loc = get_location_and_direction(polygon_arr, angle=angle, thickness=thickness, nucleation_point=nucleation_point, min_distance=min_distance, max_attempts=max_attempts)
+    loc = get_location_and_direction(polygon_arr, angle=angle, thickness=thickness, nucleation_point=nucleation_point, min_distance=min_distance)
     if loc:
         polygon_id, polygon, location_new, direction_new, perpendicular, angle_new = loc
     else:
-        print('No valid location found')
+        print('Configuration is not feasible. Skipped point.')
         return False
         
     # Get the borders of the new segment with the given thickness
@@ -538,11 +512,11 @@ def add_line_segment(
     
     return segments_dict, polygon_arr, segment_thickness_dict, location_new, angle_new
 
-def generate_line_segments_thickness(
+def generate_line_segments_thickness_config(
     size: int, 
     thickness_arr: List[float], 
     angles: str = 'uniform',
-    config: List[List[float]] = None, 
+    nucleation_points = None, 
     epsilon: float = 0,
     box_size: float = 1 
     ) -> Tuple[Dict[str, LineSegment], Dict[str, Dict[str, object]], Dict[int, Polygon], np.ndarray]:
@@ -553,7 +527,7 @@ def generate_line_segments_thickness(
         size (int): The number of line segments to generate.
         thickness_arr (List[float]): A list containing the thickness values for each segment to be generated.
         angles (str): Angle used in the generation of the segments.
-        config (List[List[float]]): A list of configurations for the nucleation points and angles.
+        nucleation_points
         epsilon (float): the minimum distance between two line.
         box_size (float): the size of the box.
 
@@ -586,48 +560,31 @@ def generate_line_segments_thickness(
     segment_thickness_dict = {}
     generated_config = []
 
-    if config is not None and size > len(config):
-        print("The size of the configuration is smaller than the size of the segments. Generated a network of the same size as the configuration.")
-        size = len(config)
-
-    jammed = False
     for i in range(size):
-        if config:
-            nucleation_point = config[i]['location']
-            angles = [config[i]['angle']]
-        else:
-            nucleation_point = None
-            # if angles != 'uniform':
-            #     angles=[angles[i]]
+        nucleation_point = nucleation_points[i]
+        angle = angles[i]     
+        thickness = thickness_arr[i]
 
         output = add_line_segment(segments_dict, 
                                     polygon_arr, 
                                     segment_thickness_dict, 
-                                    thickness=thickness_arr[i], 
+                                    thickness=thickness, 
                                     min_distance = epsilon,
                                     nucleation_point = nucleation_point, 
-                                    angle=angles[i],
+                                    angle=angle,
                                     box_size=box_size)
         if output:
             segments_dict, polygon_arr, segment_thickness_dict, location, angle = output
             generated_config.append({ 'location': location, 'angle': angle, 'thickness': thickness_arr[i] })
+            nucleation_points.append(location)
 
-        else:
-            if config:
-                print('Configuration not possible. Point is skipped.')
-            else:    
-                print(f"Stopped at iteration {len(segment_thickness_dict)}, could not find a valid segment position.")
-                jammed = True
-                break
-            
-        # Uncomment the following line if you want progress feedback
         percentage = np.round(i / size * 100, 3)
         print(f'generate_segments: {percentage}% done', end='\r')
     
     data_dict = {'segments_dict': segments_dict, 
                  'polygon_arr': polygon_arr, 
                  'segment_thickness_dict': segment_thickness_dict, 
-                 'jammed': jammed,
+                 'jammed': 'NA',
                  'generated_config': generated_config}
     
     return data_dict

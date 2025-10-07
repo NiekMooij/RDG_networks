@@ -111,7 +111,7 @@ class Polygon:
         vertices (List[Tuple[float, float]]): A list of (x, y) coordinates representing the vertices of the polygon.
     """
 
-    def __init__(self, vertices: List[tuple], middle_segment=None, neighbors=None):
+    def __init__(self, vertices: List[tuple], middle_segment=None, neighbors=None, neighbors_initial=None):
         """
         Initializes a Polygon instance with the provided vertices.
 
@@ -121,6 +121,7 @@ class Polygon:
         self.vertices = vertices
         self.middle_segment = middle_segment
         self.neighbors = neighbors
+        self.neighbors_initial = neighbors_initial
 
     def area(self) -> float:
         """
@@ -205,7 +206,8 @@ class Polygon:
         return {
             'vertices': self.vertices,
             'middle_segment': self.middle_segment.to_dict(),
-            'neighbors': self.neighbors
+            'neighbors': self.neighbors,
+            'neighbors_initial': self.neighbors_initial
         }
         
 class Cycle:
